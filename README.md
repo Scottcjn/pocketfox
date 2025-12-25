@@ -138,6 +138,12 @@ Tiger's built-in OpenSSL (0.9.7) and Safari can't connect to modern HTTPS sites.
 
 MIT License - Free to use, please keep attribution.
 
+## Community
+
+Join the RustChain Discord:
+
+[![Discord](https://img.shields.io/badge/Discord-RustChain-7289DA?logo=discord&logoColor=white)](https://discord.gg/tQ4q3z4M)
+
 ---
 
 ## Traffic Note
