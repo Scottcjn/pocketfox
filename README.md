@@ -140,4 +140,14 @@ MIT License - Free to use, please keep attribution.
 
 ---
 
+## Traffic Note
+
+**600+ clones across 14 repos in under 48 hours. Zero stars.**
+
+This work is being actively scraped by someone — government HPC labs, AI research groups, defense contractors? If you're mirroring for research purposes, feel free to reach out. Otherwise, a star would be nice.
+
+The clone-to-star ratio is the purest form of underground validation. We see you. 👁️
+
+---
+
 *"Modern web on your 2005 Power Mac."*
