@@ -157,3 +157,12 @@ The clone-to-star ratio is the purest form of underground validation. We see you
 ---
 
 *"Modern web on your 2005 Power Mac."*
+
+
+## 中文简介
+
+pocketfox - Elyan Labs 生态系统组件
+
+为中文用户提供更好的使用体验。
+
+Contributed by eelaine-wzw
