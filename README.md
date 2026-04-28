@@ -75,7 +75,7 @@ cp PocketFox PocketFox.app/Contents/MacOS/
 Or use the build script:
 ```bash
 ./build_pocketfox.sh mbedtls   # Build mbedTLS
-./build_pocketfox.sh firefox   # Build PocketFox
+./build_pocketfox.sh firefox   # Build PocketFox browser
 ./build_pocketfox.sh package   # Create .app bundle
 ```
 
