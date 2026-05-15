@@ -137,7 +137,7 @@ Tiger's built-in OpenSSL (0.9.7) and Safari can't connect to modern HTTPS sites.
 
 ## License
 
-MIT License - Free to use, please keep attribution.
+Apache License 2.0 - see LICENSE for details.
 
 ## Community
 
