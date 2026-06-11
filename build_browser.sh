@@ -93,12 +93,15 @@ $CC $CFLAGS -std=c99 -c pocketfox_ssl_tiger.c -o pocketfox_ssl_tiger.o
 echo "Compiling pocketfox_http.c..."
 $CC $CFLAGS -std=c99 -c pocketfox_http.c -o pocketfox_http.o
 
+echo "Compiling pocketfox_render.c..."
+$CC $CFLAGS -std=c99 -c pocketfox_render.c -o pocketfox_render.o
+
 echo "Compiling pocketfox_tiger_gui.m..."
 $CC $CFLAGS -c pocketfox_tiger_gui.m -o pocketfox_tiger_gui.o
 
 echo "Linking PocketFox..."
 $CC $ARCH_FLAGS -o PocketFox \
-    pocketfox_tiger_gui.o pocketfox_http.o pocketfox_ssl_tiger.o \
+    pocketfox_tiger_gui.o pocketfox_http.o pocketfox_render.o pocketfox_ssl_tiger.o \
     $LDFLAGS
 
 echo ""

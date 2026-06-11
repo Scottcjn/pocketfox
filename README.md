@@ -8,10 +8,25 @@ PocketFox is a lightweight web browser that brings modern HTTPS to PowerPC Macs.
 ## Features
 
 - Native Cocoa UI (Objective-C)
-- TLS 1.2 with ChaCha20-Poly1305
+- TLS 1.2 with ChaCha20-Poly1305 (embedded mbedTLS 2.28 — bypasses Tiger's broken OpenSSL)
 - HTTP and HTTPS support
+- **Text-mode HTML rendering** — strips script/style, converts block elements to
+  readable layout, decodes named **and** numeric (`&#233;`, `&#x2764;`) entities
+  to UTF-8, and surfaces links inline (`text <url>`) so they're never invisible
+- History, bookmarks, title extraction
 - Works on Tiger (10.4) and Leopard (10.5)
 - PowerPC G4/G5 optimized
+
+## Rendering
+
+PocketFox renders pages as clean, readable **text** (lynx-style), not full
+graphical layout — the right trade for a lightweight browser on a G4. The
+renderer is a standalone, unit-tested C module (`pocketfox_render.c`); run its
+tests on any host:
+
+```bash
+cc -I. -o /tmp/test_render tests/test_render.c pocketfox_render.c && /tmp/test_render
+```
 
 ## Screenshots
 

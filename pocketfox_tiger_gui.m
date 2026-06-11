@@ -24,6 +24,7 @@
 #include <string.h>
 
 #include "pocketfox_http.h"
+#include "pocketfox_render.h"
 
 /* Forward declarations from pocketfox_ssl_tiger.c */
 extern int pocketfox_ssl_init(void);
@@ -33,128 +34,7 @@ extern void pocketfox_ssl_shutdown(void);
  * HTML Entity Decoder & Tag Stripper
  * ============================================ */
 
-static char *strip_html(const char *html, size_t html_len) {
-    char *text = (char *)malloc(html_len + 1);
-    size_t j = 0;
-    int in_tag = 0;
-    int in_script = 0;
-    size_t i;
-
-    for (i = 0; i < html_len; i++) {
-        char c = html[i];
-
-        if (i + 7 < html_len && strncasecmp(html + i, "<script", 7) == 0) in_script = 1;
-        if (i + 9 < html_len && strncasecmp(html + i, "</script>", 9) == 0) { in_script = 0; i += 8; continue; }
-        if (i + 6 < html_len && strncasecmp(html + i, "<style", 6) == 0) in_script = 1;
-        if (i + 8 < html_len && strncasecmp(html + i, "</style>", 8) == 0) { in_script = 0; i += 7; continue; }
-
-        /* Convert <br>, <br/>, <p>, <div>, <li> to newlines */
-        if (c == '<') {
-            if (i + 4 < html_len && (strncasecmp(html + i, "<br>", 4) == 0 ||
-                                      strncasecmp(html + i, "<br/", 4) == 0 ||
-                                      strncasecmp(html + i, "<br ", 4) == 0)) {
-                text[j++] = '\n';
-            }
-            if (i + 2 < html_len && (strncasecmp(html + i, "<p", 2) == 0 ||
-                                      strncasecmp(html + i, "<d", 2) == 0)) {
-                if (j > 0 && text[j-1] != '\n') text[j++] = '\n';
-            }
-            if (i + 3 < html_len && strncasecmp(html + i, "<li", 3) == 0) {
-                if (j > 0 && text[j-1] != '\n') text[j++] = '\n';
-                text[j++] = ' '; text[j++] = '-'; text[j++] = ' ';
-            }
-            if (i + 3 < html_len && (strncasecmp(html + i, "<h1", 3) == 0 ||
-                                      strncasecmp(html + i, "<h2", 3) == 0 ||
-                                      strncasecmp(html + i, "<h3", 3) == 0)) {
-                if (j > 0 && text[j-1] != '\n') text[j++] = '\n';
-                text[j++] = '\n';
-            }
-            in_tag = 1;
-            continue;
-        }
-        if (c == '>') { in_tag = 0; continue; }
-
-        if (!in_tag && !in_script) {
-            if (c == '&') {
-                if (strncmp(html + i, "&nbsp;", 6) == 0) { text[j++] = ' '; i += 5; }
-                else if (strncmp(html + i, "&lt;", 4) == 0) { text[j++] = '<'; i += 3; }
-                else if (strncmp(html + i, "&gt;", 4) == 0) { text[j++] = '>'; i += 3; }
-                else if (strncmp(html + i, "&amp;", 5) == 0) { text[j++] = '&'; i += 4; }
-                else if (strncmp(html + i, "&quot;", 6) == 0) { text[j++] = '"'; i += 5; }
-                else if (strncmp(html + i, "&#39;", 5) == 0) { text[j++] = '\''; i += 4; }
-                else if (strncmp(html + i, "&apos;", 6) == 0) { text[j++] = '\''; i += 5; }
-                else if (strncmp(html + i, "&mdash;", 7) == 0) { text[j++] = '-'; text[j++] = '-'; i += 6; }
-                else if (strncmp(html + i, "&ndash;", 7) == 0) { text[j++] = '-'; i += 6; }
-                else if (strncmp(html + i, "&hellip;", 8) == 0) { text[j++] = '.'; text[j++] = '.'; text[j++] = '.'; i += 7; }
-                else if (html[i+1] == '#') {
-                    /* Numeric entity &#NNN; or &#xHH; */
-                    const char *semi = strchr(html + i, ';');
-                    if (semi && semi - (html + i) < 10) {
-                        i = semi - html;
-                        text[j++] = '?'; /* placeholder */
-                    } else {
-                        text[j++] = '&';
-                    }
-                }
-                else text[j++] = '&';
-            } else {
-                text[j++] = c;
-            }
-        }
-    }
-
-    text[j] = '\0';
-
-    /* Collapse multiple blank lines */
-    char *clean = (char *)malloc(j + 1);
-    size_t k = 0;
-    int blank_count = 0;
-    for (i = 0; i < j; i++) {
-        if (text[i] == '\n') {
-            blank_count++;
-            if (blank_count <= 2) clean[k++] = '\n';
-        } else {
-            blank_count = 0;
-            clean[k++] = text[i];
-        }
-    }
-    clean[k] = '\0';
-    free(text);
-    return clean;
-}
-
-/* Extract <title>...</title> from HTML */
-static void extract_title(const char *html, size_t len, char *title_buf, size_t bufsz) {
-    title_buf[0] = '\0';
-    const char *ts = NULL;
-    size_t i;
-    for (i = 0; i + 7 < len; i++) {
-        if (strncasecmp(html + i, "<title>", 7) == 0) { ts = html + i + 7; break; }
-        if (strncasecmp(html + i, "<title ", 7) == 0) {
-            const char *gt = strchr(html + i, '>');
-            if (gt) { ts = gt + 1; break; }
-        }
-    }
-    if (!ts) return;
-
-    const char *te = NULL;
-    for (i = ts - html; i + 8 < len; i++) {
-        if (strncasecmp(html + i, "</title>", 8) == 0) { te = html + i; break; }
-    }
-    if (!te || te <= ts) return;
-
-    size_t tlen = te - ts;
-    if (tlen >= bufsz) tlen = bufsz - 1;
-    memcpy(title_buf, ts, tlen);
-    title_buf[tlen] = '\0';
-
-    /* Trim whitespace */
-    char *s = title_buf;
-    while (*s == ' ' || *s == '\t' || *s == '\n' || *s == '\r') s++;
-    if (s != title_buf) memmove(title_buf, s, strlen(s) + 1);
-    char *e = title_buf + strlen(title_buf) - 1;
-    while (e > title_buf && (*e == ' ' || *e == '\t' || *e == '\n' || *e == '\r')) *e-- = '\0';
-}
+/* HTML rendering lives in pocketfox_render.c (pf_strip_html / pf_extract_title). */
 
 /* ============================================
  * History Stack
@@ -503,7 +383,7 @@ static void bookmarks_add(Bookmarks *bm, const char *url, const char *title) {
     if (finalUrl) [urlField setStringValue:finalUrl];
 
     /* Extract title */
-    extract_title(resp->body, resp->body_len, pageTitle, sizeof(pageTitle));
+    pf_extract_title(resp->body, resp->body_len, pageTitle, sizeof(pageTitle));
 
     /* Update window title */
     if (pageTitle[0]) {
@@ -519,7 +399,7 @@ static void bookmarks_add(Bookmarks *bm, const char *url, const char *title) {
     if (viewSource) {
         displayText = [NSString stringWithUTF8String:resp->body];
     } else {
-        char *stripped = strip_html(resp->body, resp->body_len);
+        char *stripped = pf_strip_html(resp->body, resp->body_len);
         displayText = [NSString stringWithUTF8String:stripped];
         if (!displayText)
             displayText = [NSString stringWithCString:stripped
