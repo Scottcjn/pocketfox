@@ -37,6 +37,7 @@ extern int pocketfox_ssl_read(PocketFoxSSL* ctx, unsigned char* buf, size_t len)
 extern int pocketfox_ssl_write(PocketFoxSSL* ctx, const unsigned char* buf, size_t len);
 extern void pocketfox_ssl_close(PocketFoxSSL* ctx);
 extern const char* pocketfox_ssl_error(PocketFoxSSL* ctx);
+extern void pocketfox_ssl_set_insecure(int insecure);
 
 /* ============================================
  * URL Parser
@@ -441,6 +442,7 @@ static void usage(void) {
     fprintf(stderr, "Options:\n");
     fprintf(stderr, "  -O FILE    Save to FILE\n");
     fprintf(stderr, "  -q         Quiet mode\n");
+    fprintf(stderr, "  -k, --insecure  Skip certificate verification (DANGEROUS)\n");
     fprintf(stderr, "  -h         Show help\n");
     fprintf(stderr, "  --version  Show version\n");
     fprintf(stderr, "\nBuilt with mbedTLS for HTTPS on PowerPC Tiger\n");
@@ -458,6 +460,9 @@ int main(int argc, char** argv) {
             output_file = argv[++i];
         } else if (strcmp(argv[i], "-q") == 0) {
             quiet = 1;
+        } else if (strcmp(argv[i], "-k") == 0 ||
+                   strcmp(argv[i], "--insecure") == 0) {
+            pocketfox_ssl_set_insecure(1);
         } else if (strcmp(argv[i], "-h") == 0 || strcmp(argv[i], "--help") == 0) {
             usage();
             return 0;

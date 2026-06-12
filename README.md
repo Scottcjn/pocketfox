@@ -9,6 +9,7 @@ PocketFox is a lightweight web browser that brings modern HTTPS to PowerPC Macs.
 
 - Native Cocoa UI (Objective-C)
 - TLS 1.2 with ChaCha20-Poly1305 (embedded mbedTLS 2.28 — bypasses Tiger's broken OpenSSL)
+- Real certificate verification via embedded Mozilla CA bundle (see [Certificate Verification](#certificate-verification))
 - HTTP and HTTPS support
 - **Text-mode HTML rendering** — strips script/style, converts block elements to
   readable layout, decodes named **and** numeric (`&#233;`, `&#x2764;`) entities
@@ -123,10 +124,34 @@ gcc -arch ppc -std=c99 -O2 -DHAVE_MBEDTLS \
 
 **Features:**
 - TLS 1.2 with modern ciphers
+- Certificate verification against the embedded Mozilla CA bundle (`-k` to skip)
 - HTTP 301/302 redirect following
 - Chunked transfer encoding support
 - Progress bar with percentage
 - Downloads from GitHub!
+
+## Certificate Verification
+
+PocketFox **verifies server certificates by default** against an embedded
+copy of Mozilla's CA root bundle (121 roots, via
+[curl.se/ca](https://curl.se/docs/caextract.html)), so HTTPS on Tiger means
+the same thing it does on a modern machine. Tiger's own root store is two
+decades stale — PocketFox doesn't use it.
+
+- **Embedded bundle**: `pocketfox_cacert.h`, regenerated weekly by CI from
+  curl.se (SHA-256 verified). Run `sh tools/update_cacert.sh` to refresh
+  manually.
+- **User override**: drop a newer `cacert.pem` into
+  `~/Library/Application Support/PocketFox/` and it's used instead of the
+  embedded copy.
+- **Escape hatch**: `wget -k` / `--insecure`, or
+  `pocketfox_ssl_set_insecure(1)` in code — verification off, like
+  `curl -k`. Off by default, loudly warned.
+
+**Wrong clock = failed verification.** Vintage Macs with dead PRAM
+batteries reset their date, which makes every certificate look not-yet-valid.
+If every site fails with a certificate date error, set the clock in
+System Preferences first.
 
 ## Why PocketFox?
 

@@ -1,0 +1,33 @@
+name: Update CA bundle
+
+# Refreshes the embedded Mozilla CA root bundle weekly from curl.se.
+# Vintage targets never run this — they consume the committed header.
+
+on:
+  schedule:
+    - cron: "17 6 * * 1"   # Mondays 06:17 UTC
+  workflow_dispatch: {}
+
+permissions:
+  contents: write
+
+jobs:
+  update-cacert:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Fetch, verify, regenerate
+        run: sh tools/update_cacert.sh
+
+      - name: Commit if changed
+        run: |
+          if git diff --quiet pocketfox_cacert.h certs/; then
+            echo "CA bundle unchanged"
+            exit 0
+          fi
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git add pocketfox_cacert.h certs/
+          git commit -m "chore: refresh embedded Mozilla CA bundle"
+          git push

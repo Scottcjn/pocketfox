@@ -114,6 +114,21 @@ const char* pocketfox_ssl_error(PocketFoxSSL* ctx);
  */
 int pocketfox_ssl_load_ca_bundle(PocketFoxSSL* ctx, const char* path);
 
+/**
+ * Enable/disable insecure mode (skip certificate verification, like curl -k).
+ * OFF by default: connections verify the server certificate against the
+ * embedded Mozilla CA bundle (or a user override in
+ * ~/Library/Application Support/PocketFox/cacert.pem).
+ * Affects contexts created AFTER this call.
+ * @param insecure Non-zero to disable verification
+ */
+void pocketfox_ssl_set_insecure(int insecure);
+
+/**
+ * @return Non-zero if insecure mode is enabled
+ */
+int pocketfox_ssl_get_insecure(void);
+
 /* ============================================
  * NSS Compatibility Shims
  * These provide drop-in replacements for NSS functions
