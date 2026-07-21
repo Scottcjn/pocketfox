@@ -46,6 +46,8 @@ int main(void) {
     /* 4. script/style stripped, blocks -> newlines */
     expect_absent("<script>var x=1;</script>hi", "var x", "script body stripped");
     expect_contains("<li>one</li>", "- one", "li -> bullet");
+    expect_contains("x<br>y", "x\ny", "<br> mid-buffer -> newline");
+    expect_contains("x<br>", "x\n", "trailing <br> at buffer end -> newline (off-by-one)");
 
     /* 5. bounds safety: a li/h-heavy page must not crash (latent overflow fix) */
     {

@@ -86,7 +86,7 @@ char *pf_strip_html(const char *html, size_t html_len) {
         if (i + 8 < html_len && strncasecmp(html + i, "</style>", 8) == 0) { in_script = 0; i += 7; continue; }
 
         if (c == '<') {
-            if (i + 4 < html_len && (strncasecmp(html + i, "<br>", 4) == 0 ||
+            if (i + 4 <= html_len && (strncasecmp(html + i, "<br>", 4) == 0 ||
                                       strncasecmp(html + i, "<br/", 4) == 0 ||
                                       strncasecmp(html + i, "<br ", 4) == 0)) {
                 PUT('\n');
